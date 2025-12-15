@@ -22,6 +22,12 @@ type Process struct {
 	dataSaver DataSaver
 }
 
+func NewProcess(dataSaver DataSaver) *Process {
+	return &Process{
+		dataSaver: dataSaver,
+	}
+}
+
 func (u *Process) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, maxMemory)
 	if err := r.ParseMultipartForm(maxRAMMemory); err != nil {
@@ -54,7 +60,7 @@ func (u *Process) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	err = u.dataSaver.SaveData(r.Context(), record)
 	if err != nil {
-		// to do
+		log.Println("Не получилось сохранить данные: ", err)
 	}
 
 	log.Printf("Запись успешно загружена!")

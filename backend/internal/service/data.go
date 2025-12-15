@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
-	"mime/multipart"
+	"fmt"
+	"io"
+	"strconv"
 
 	"github.com/RobertGabdullin/summarizer/internal/models"
 )
@@ -12,33 +14,32 @@ type metadataStorage interface {
 }
 
 type meetingStorage interface {
-	StoreMeeting(context.Context, int, multipart.File) error
-}
-
-type requestProducer interface {
-	ProduceRequest(context.Context, int) error
+	StoreMeeting(context.Context, string, io.Reader) error
 }
 
 type UserData struct {
-	metadata metadataStorage
-	meeting  meetingStorage
-	producer requestProducer
+	Metadata metadataStorage
+	Meeting  meetingStorage
+}
+
+func NewUserData(metadataStorage metadataStorage, meeting meetingStorage) *UserData {
+	return &UserData{
+		Metadata: metadataStorage,
+		Meeting:  meeting,
+	}
 }
 
 func (u *UserData) SaveData(ctx context.Context, record *models.Record) error {
-	id, err := u.metadata.StoreMetadata(ctx, record.Metadata)
+	id, err := u.Metadata.StoreMetadata(ctx, record.Metadata)
 	if err != nil {
-		// to do
+		return fmt.Errorf("Не удалось сохранить метаданные: %w", err)
 	}
 
-	err = u.meeting.StoreMeeting(ctx, id, record.Meeting)
-	if err != nil {
-		// to do
-	}
+	idStr := strconv.Itoa(id)
 
-	err = u.producer.ProduceRequest(ctx, id)
+	err = u.Meeting.StoreMeeting(ctx, idStr, record.Meeting)
 	if err != nil {
-		// to do
+		return fmt.Errorf("Не удалось сохранить запись встречи: %w", err)
 	}
 
 	return nil

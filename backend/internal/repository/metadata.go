@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/RobertGabdullin/summarizer/internal/models"
 
@@ -12,7 +13,10 @@ type PostgresClient struct {
 	client *pgxpool.Pool
 }
 
-func NewPostgresClient(dsn string) (*PostgresClient, error) {
+func NewPostgresClient(user, password, host, dbname string, port int) (*PostgresClient, error) {
+	dsn := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable",
+		user, password, host, port, dbname)
+
 	pool, err := pgxpool.New(context.TODO(), dsn)
 	if err != nil {
 		return nil, err
@@ -26,9 +30,9 @@ func NewPostgresClient(dsn string) (*PostgresClient, error) {
 }
 
 func (c *PostgresClient) StoreMetadata(ctx context.Context, metadata *models.Metadata) (int, error) {
-	sql := "INSERT INTO records () VALUES ($1, $2, $3, $4, $5) RETURNING id"
+	sql := "INSERT INTO records (prompt, participants) VALUES ($1, $2) RETURNING id"
 	var id int
-	err := c.client.QueryRow(ctx, sql).Scan(&id)
+	err := c.client.QueryRow(ctx, sql, metadata.Prompt, metadata.Participants).Scan(&id)
 	if err != nil {
 		return 0, err
 	}
