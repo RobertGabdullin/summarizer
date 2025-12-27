@@ -5,6 +5,8 @@ CREATE TABLE records(
     prompt TEXT,
     participants INTEGER,
     status TEXT NOT NULL DEFAULT 'PENDING',
+    transcribation TEXT,
+    summarization TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 -- +goose StatementEnd
